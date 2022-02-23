@@ -16,24 +16,24 @@ class MyHandler(ResponseHandler):
 
     def mutation(self, response):
         self.lock.acquire()
-        #print "Mutation: ", response
+        print("Mutation: ", response)
         self.count +=1
         self.lock.release()
 
     def deletion(self, response):
         self.lock.acquire()
-        #print "Deletion: ", response
+        print("Deletion: ", response)
         self.count += 1
         self.lock.release()
 
     def marker(self, response):
         self.lock.acquire()
-        #print "Marker: ", response
+        print("Marker: ", response)
         self.lock.release()
 
     def stream_end(self, response):
         self.lock.acquire()
-        #print "Stream End: ", response
+        print("Stream End: ", response)
         self.lock.release()
 
     def get_num_items(self):
@@ -44,14 +44,16 @@ def main():
     client = DcpClient()
     client.connect('127.0.0.1', 8091, 'test_geospatial', 'swarmfarm', 'swarmfarm',
                    handler)
-    for i in range(8):
-        result = client.add_stream(i, 0, 0, 10, 0, 0, 0)
+    for i in range(1024):
+        print("Doing for " + str(i))
+        result = client.add_stream(i, 0, 0, 10000, 0, 0, 0)
         if result['status'] != 0:
             print('Stream request to vb %d failed dur to error %d' %\
                 (i, result['status']))
 
     while handler.has_active_streams():
-        time.sleep(.25)
+        continue
+        # time.sleep(.25)
 
     print(handler.get_num_items())
     client.close()
