@@ -20,9 +20,11 @@ class ConnectionManager(threading.Thread):
         self.connections = list()
         self.readers = list()
         self.writers = list()
+        self.epoll_handle = select.epoll()
 
         self.daemon = True
         self.running = True
+
         self.start()
 
     def connect(self, cluster_config, bucket_config):
@@ -30,7 +32,7 @@ class ConnectionManager(threading.Thread):
         self.bucket_config = bucket_config
         for name, node in list(cluster_config.items()):
             conn = DcpConnection(node['host'].encode('ascii'), node['data_port'], self.handler)
-            conn.connect()
+            conn.connect(self.epoll_handle)
             self.readers.append(conn.socket)
             self.connections.append(conn)
 
@@ -54,33 +56,39 @@ class ConnectionManager(threading.Thread):
     def run(self):
         bytes_read = ''
         while self.running:
-            r_ready, w_ready, errors = select.select(self.readers,
-                                                     self.writers,
-                                                     [], .25) # Add better timeout
+            # r_ready, w_ready, errors = select.select(self.readers,
+            #                                          self.writers,
+            #                                          [], .25) # Add better timeout
+            events = self.epoll_handle.poll(1)
+            for fileno, event in events:
 
-            for reader in r_ready:
-                data = reader.recv(1024)
+                if event & select.EPOLLIN == select.EPOLLIN:
+                    for reader in self.readers:
+                        if reader.fileno() == fileno:
+                            data = reader.recv(1024)
 
-                conn = self._get_connection_by_socket(reader)
+                            conn = self._get_connection_by_socket(reader)
 
-                if conn is None:
-                    logging.warn('Read response, but can\'t find a connection')
-                    self.readers.remove(reader)
+                            if conn is None:
+                                logging.warn('Read response, but can\'t find a connection')
+                                self.readers.remove(reader)
 
-                if len(data) == 0:
-                    logging .info('Connection lost')
-                    #logger.info("Connection lost for %s:%d", conn.host, conn.port)
-                    #self._connection_lost()
-                else:
-                    conn.bytes_read(data)
+                            if len(data) == 0:
+                                logging .info('Connection lost')
+                                #logger.info("Connection lost for %s:%d", conn.host, conn.port)
+                                #self._connection_lost()
+                            else:
+                                conn.bytes_read(data)
 
-            for writer in w_ready:
-                conn = self._get_connection_by_socket(writer)
-                if conn is None:
-                    logging.warn('Cannot write response, no connection')
-                else:
-                    conn.socket_write()
-                self.writers.remove(writer)
+                if event & select.EPOLLOUT == select.EPOLLOUT:
+                    for writer in self.writers:
+                        if writer.fileno() == fileno:
+                            conn = self._get_connection_by_socket(writer)
+                            if conn is None:
+                                logging.warn('Cannot write response, no connection')
+                            else:
+                                conn.socket_write()
+                            self.writers.remove(writer)
 
     def close(self):
         self.running = False
@@ -115,10 +123,11 @@ class DcpConnection(object):
         self.writeLock = threading.Lock()
         self.ops = list()
 
-    def connect(self):
+    def connect(self, epoll_handle):
         try:
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.socket.connect((self.host, self.port))
+            epoll_handle.register(self.socket.fileno(), select.EPOLLIN | select.EPOLLOUT)
         except Exception as e:
             self.socket = None
 
