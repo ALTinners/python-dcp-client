@@ -32,10 +32,11 @@ class RestClient(object):
         for node in data['nodes']:
             name = node['hostname'].encode('ascii')
             nodes[name] = dict()
-            nodes[name]['host'] = name.split(':')[0]
-            nodes[name]['rest_port'] = int(name.split(':')[1])
+            nodes[name]['host'] = name.decode().split(':')[0]
+            nodes[name]['rest_port'] = int(name.decode().split(':')[1])
             nodes[name]['data_port'] = node['ports']['direct']
-            nodes[name]['proxy_port'] = node['ports']['proxy']
+            if "proxy" in node["ports"]:
+                nodes[name]['proxy_port'] = node['ports']['proxy']
         self.nodes = nodes
 
     def _get_buckets(self):

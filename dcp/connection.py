@@ -57,7 +57,7 @@ class ConnectionManager(threading.Thread):
             r_ready, w_ready, errors = select.select(self.readers,
                                                      self.writers,
                                                      [], .25) # Add better timeout
-            
+
             for reader in r_ready:
                 data = reader.recv(1024)
 
@@ -109,8 +109,8 @@ class DcpConnection(object):
         self.host = host
         self.port = port
         self.handler = handler
-        self.toRead = ''
-        self.toWrite = ''
+        self.toRead = b''
+        self.toWrite = b''
         self.socket = None
         self.writeLock = threading.Lock()
         self.ops = list()
@@ -135,10 +135,10 @@ class DcpConnection(object):
         while len(self.toRead) >= HEADER_LEN:
             magic, opcode, keylen, extlen, dt, status, bodylen, opaque, cas = \
                 struct.unpack(PKT_HEADER_FMT, self.toRead[0:HEADER_LEN])
-            
+
             if len(self.toRead) < (HEADER_LEN + bodylen):
                 break
-                
+
             body = self.toRead[HEADER_LEN:HEADER_LEN + bodylen]
             packet = self.toRead[0:HEADER_LEN + bodylen]
             self.toRead = self.toRead[HEADER_LEN+bodylen:]
@@ -175,7 +175,7 @@ class DcpConnection(object):
         # Assume we can always write since writes are rare
         # This may need to be fixed in the future
         self.socket.send(self.toWrite)
-        self.toWrite = ''
+        self.toWrite = b''
         self.writeLock.release()
 
     def close(self):

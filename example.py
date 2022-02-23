@@ -42,7 +42,7 @@ class MyHandler(ResponseHandler):
 def main():
     handler = MyHandler()
     client = DcpClient()
-    client.connect('172.23.105.195', 8091, 'bucket-1', 'Administrator', 'password',
+    client.connect('127.0.0.1', 8091, 'test_geospatial', 'swarmfarm', 'swarmfarm',
                    handler)
     for i in range(8):
         result = client.add_stream(i, 0, 0, 10, 0, 0, 0)

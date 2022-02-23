@@ -57,7 +57,7 @@ class Operation():
         header = struct.pack(C.PKT_HEADER_FMT, C.REQ_MAGIC, self.opcode,
                              len(self.key), len(extras), self.data_type,
                              self.vbucket, bodylen, self.opaque, self.cas)
-        return header + extras + self.key + self.value
+        return header + extras + self.key.encode('ascii') + self.value.encode('ascii')
 
     def _get_extras(self):
         raise NotImplementedError("Subclass must implement abstract method")
@@ -105,7 +105,7 @@ class Control(Operation):
         self.latch.count_down()
 
     def _get_extras(self):
-        return ''
+        return b''
 
 class CloseStream(Operation):
 
@@ -119,7 +119,7 @@ class CloseStream(Operation):
         return True
 
     def _get_extras(self):
-        return ''
+        return b''
 
 
 class StreamRequest(Operation):
@@ -167,7 +167,7 @@ class StreamRequest(Operation):
 class SaslPlain(Operation):
 
     def __init__(self, username, password, latch):
-        val = '\0'.join(['', username, password])
+        val = '\0'.join(['', username, password.decode()])
         Operation.__init__(self, C.CMD_SASL_AUTH, 0, 0, 0, 'PLAIN', val)
         self.latch = latch
         self.result = True
@@ -178,4 +178,4 @@ class SaslPlain(Operation):
         self.latch.count_down()
 
     def _get_extras(self):
-        return ''
+        return b''
