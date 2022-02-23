@@ -1,14 +1,14 @@
 
-import operation
+from . import operation
 import threading
 import time
 import uuid
 
-from cluster import RestClient
-from connection import ConnectionManager
-from constants import FLAG_OPEN_PRODUCER
-from dcp_exception import ConnectedException
-from operation import (CountdownLatch, Control, OpenConnection, SaslPlain,
+from .cluster import RestClient
+from .connection import ConnectionManager
+from .constants import FLAG_OPEN_PRODUCER
+from .dcp_exception import ConnectedException
+from .operation import (CountdownLatch, Control, OpenConnection, SaslPlain,
                        StreamRequest)
 
 class ResponseHandler():

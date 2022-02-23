@@ -5,7 +5,7 @@ import struct
 import threading
 import time
 
-from constants import (HEADER_LEN, PKT_HEADER_FMT, CMD_OPEN, CMD_STREAM_REQ,
+from .constants import (HEADER_LEN, PKT_HEADER_FMT, CMD_OPEN, CMD_STREAM_REQ,
                        CMD_MUTATION, CMD_DELETION, CMD_SASL_AUTH,
                        CMD_SNAPSHOT_MARKER, CMD_STREAM_END, RES_MAGIC, SUCCESS)
 
@@ -28,7 +28,7 @@ class ConnectionManager(threading.Thread):
     def connect(self, cluster_config, bucket_config):
         self.cluster_config = cluster_config
         self.bucket_config = bucket_config
-        for name, node in cluster_config.items():
+        for name, node in list(cluster_config.items()):
             conn = DcpConnection(node['host'], node['data_port'], self.handler)
             conn.connect()
             self.readers.append(conn.socket)
@@ -119,7 +119,7 @@ class DcpConnection(object):
         try:
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.socket.connect((self.host, self.port))
-        except Exception, e:
+        except Exception as e:
             self.socket = None
 
     def compare_by_host(self, hostname):

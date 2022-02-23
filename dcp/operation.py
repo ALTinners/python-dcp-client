@@ -1,8 +1,8 @@
 import binascii
-import Queue
+import queue
 import struct
 
-import constants as C
+from . import constants as C
 
 import threading
 
