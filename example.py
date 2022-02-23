@@ -46,14 +46,14 @@ def main():
                    handler)
     for i in range(1024):
         print("Doing for " + str(i))
-        result = client.add_stream(i, 0, 0, 10000, 0, 0, 0)
-        if result['status'] != 0:
-            print('Stream request to vb %d failed dur to error %d' %\
-                (i, result['status']))
+        # result = client.add_stream(i, 0, 0, 10000, 0, 0, 0)
+        # if result['status'] != 0:
+        #     print('Stream request to vb %d failed dur to error %d' %\
+        #         (i, result['status']))
+        client.add_stream(i, 0, 0, 10000000, 0, 0, 0)
 
     while handler.has_active_streams():
-        continue
-        # time.sleep(.25)
+        time.sleep(.25)
 
     print(handler.get_num_items())
     client.close()

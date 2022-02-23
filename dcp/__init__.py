@@ -97,10 +97,10 @@ class DcpClient(object):
         op = StreamRequest(vbucket, flags, start_seqno, end_seqno, vb_uuid,
                            snap_start, snap_end, latch)
         self.connection.add_operation(op, vbucket)
-        ret = op.get_result()
+        # ret = op.get_result()
 
         self.lock.release()
-        return ret
+        # return ret
 
     # Returns true if the stream is closed successfully
     def close_stream(self):
