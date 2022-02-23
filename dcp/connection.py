@@ -29,7 +29,7 @@ class ConnectionManager(threading.Thread):
         self.cluster_config = cluster_config
         self.bucket_config = bucket_config
         for name, node in list(cluster_config.items()):
-            conn = DcpConnection(node['host'], node['data_port'], self.handler)
+            conn = DcpConnection(node['host'].encode('ascii'), node['data_port'], self.handler)
             conn.connect()
             self.readers.append(conn.socket)
             self.connections.append(conn)
@@ -123,7 +123,7 @@ class DcpConnection(object):
             self.socket = None
 
     def compare_by_host(self, hostname):
-        name = self.host + ':' + str(self.port)
+        name = self.host + b':' + str(self.port).encode('ascii')
         return name == hostname
 
     def compare_by_socket(self, socket):
