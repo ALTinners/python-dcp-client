@@ -10,15 +10,15 @@ class CountdownLatch(object):
     def __init__(self, count=1):
         self.count = count
         self.lock = threading.Condition()
-    
+
     def count_down(self):
         self.lock.acquire()
         self.count -= 1
         if self.count <= 0:
             self.lock.notifyAll()
         self.lock.release()
-    
-    def await(self):
+
+    def await_latch(self):
         self.lock.acquire()
         while self.count > 0:
             self.lock.wait()
@@ -47,7 +47,7 @@ class Operation():
         pass
 
     def get_result(self):
-        self.latch.await()
+        self.latch.await_latch()
         assert self.result is not None
         return self.result
 
@@ -81,7 +81,7 @@ class OpenConnection(Operation):
 
         if status != C.SUCCESS:
             self.result = False
-        
+
         self.latch.count_down()
 
     def _get_extras(self):
