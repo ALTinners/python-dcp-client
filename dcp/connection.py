@@ -7,7 +7,7 @@ import time
 
 from .constants import (HEADER_LEN, PKT_HEADER_FMT, CMD_OPEN, CMD_STREAM_REQ,
                        CMD_MUTATION, CMD_DELETION, CMD_SASL_AUTH,
-                       CMD_SNAPSHOT_MARKER, CMD_STREAM_END, RES_MAGIC, SUCCESS)
+                       CMD_SNAPSHOT_MARKER, CMD_STREAM_END, RES_MAGIC, SUCCESS,CMD_GET_FAILOVER_LOG)
 
 class ConnectionManager(threading.Thread):
 
@@ -152,7 +152,7 @@ class DcpConnection(object):
             packet = self.toRead[0:HEADER_LEN + bodylen]
             self.toRead = self.toRead[HEADER_LEN+bodylen:]
 
-            if opcode in [CMD_OPEN, CMD_STREAM_REQ, CMD_SASL_AUTH]:
+            if opcode in [CMD_OPEN, CMD_STREAM_REQ, CMD_SASL_AUTH, CMD_GET_FAILOVER_LOG]:
                 if opcode is CMD_STREAM_REQ and status is not SUCCESS:
                     self.handler._decr_active_streams()
 

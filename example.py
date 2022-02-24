@@ -39,27 +39,29 @@ class MyHandler(ResponseHandler):
     def get_num_items(self):
         return self.count
 
+
 def main():
     handler = MyHandler()
     client = DcpClient()
     client.connect('127.0.0.1', 8091, 'test_geospatial', 'swarmfarm', 'swarmfarm',
                    handler)
     for i in range(1024):
-        print("Doing for " + str(i))
-        # result = client.add_stream(i, 0, 0, 10000, 0, 0, 0)
-        # if result['status'] != 0:
-        #     print('Stream request to vb %d failed dur to error %d' %\
-        #         (i, result['status']))
-        client.add_stream(i, 0, 0, 10000000, 0, 0, 0)
-
+        failoverLog = client.return_failover_log(i)
+        # print(failoverLog)
+        last_failover_log = failoverLog["failover_log"][0]
+        vbuuid = last_failover_log[0]
+        snapStart = last_failover_log[1]
+        result = client.add_stream(i, 0, 21,  0xffffffffffffffff, vbuuid, snapStart, 21)
+        # print(result)
+    
     while handler.has_active_streams():
         time.sleep(.25)
 
     print(handler.get_num_items())
     client.close()
-    #print json.dumps(client.nodes, sort_keys=True, indent=2)
-    #print json.dumps(client.buckets, sort_keys=True, indent=2)
+    # print json.dumps(client.nodes, sort_keys=True, indent=2)
+    # print json.dumps(client.buckets, sort_keys=True, indent=2)
+
 
 if __name__ == "__main__":
     main()
-

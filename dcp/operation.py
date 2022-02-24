@@ -121,7 +121,30 @@ class CloseStream(Operation):
     def _get_extras(self):
         return b''
 
+class FailoverLog(Operation):
+    def __init__(self, vb, latch):
+        Operation.__init__(self, C.CMD_GET_FAILOVER_LOG, 0, vb, 0, '', '')
+        self.latch = latch
+        self.result = dict()
 
+    def add_response(self, opcode, keylen, extlen, status, cas, body):
+        self.result['status'] = status
+
+        if status == C.SUCCESS:
+            
+            assert (len(body) % 16) == 0
+            self.result['failover_log'] = list()
+            pos = 0
+            bodylen = len(body)
+            while bodylen > pos:
+                vb_uuid, seqno = struct.unpack(">QQ", body[pos:pos+16])
+                self.result['failover_log'].append((vb_uuid, seqno))
+                pos += 16
+
+        self.latch.count_down()
+
+    def _get_extras(self):
+        return b''
 class StreamRequest(Operation):
 
     def __init__(self, vb, flags, start_seqno, end_seqno, vb_uuid, snap_start,

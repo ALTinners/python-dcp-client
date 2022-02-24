@@ -8,7 +8,7 @@ from .cluster import RestClient
 from .connection import ConnectionManager
 from .constants import FLAG_OPEN_PRODUCER
 from .dcp_exception import ConnectedException
-from .operation import (CountdownLatch, Control, OpenConnection, SaslPlain,
+from .operation import (CountdownLatch, Control, FailoverLog, OpenConnection, SaslPlain,
                        StreamRequest)
 
 class ResponseHandler():
@@ -86,6 +86,17 @@ class DcpClient(object):
 
         self.lock.release()
 
+    def return_failover_log(self, vbucket):
+        self.lock.acquire()
+        if self.connection is None:
+            raise ConnectedException("Not connected")
+        latch = CountdownLatch()
+        op = FailoverLog(vbucket, latch)
+        self.connection.add_operation(op, vbucket)
+        ret = op.get_result()
+        self.lock.release()
+        return ret
+
     # Returns true if the stream is successfully created
     def add_stream(self, vbucket, flags, start_seqno, end_seqno, vb_uuid,
                    snap_start, snap_end):
@@ -97,10 +108,10 @@ class DcpClient(object):
         op = StreamRequest(vbucket, flags, start_seqno, end_seqno, vb_uuid,
                            snap_start, snap_end, latch)
         self.connection.add_operation(op, vbucket)
-        # ret = op.get_result()
+        ret = op.get_result()
 
         self.lock.release()
-        # return ret
+        return ret
 
     # Returns true if the stream is closed successfully
     def close_stream(self):
