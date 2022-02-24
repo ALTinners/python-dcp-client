@@ -3,8 +3,16 @@
 import json
 import threading
 import time
+import copy
 
 from dcp import DcpClient, ResponseHandler, CountdownLatch
+
+def reopen_file(path):
+    try:
+        f = open(path, "r+")
+    except:
+        f = open(path, "w+")
+    return f
 
 class MyHandler(ResponseHandler):
 
@@ -35,8 +43,10 @@ class MyHandler(ResponseHandler):
         #     print("At 1009")
         self.dcpMap["startSeq"][response["vbucket"]] = response["snap_start"]
         self.dcpMap["snapEnd"][response["vbucket"]] = response["snap_end"]
-        # self.writeFile.seek(0)
-        self.writeFile.write(json.dumps(self.dcpMap))
+        f = reopen_file(self.writeFile)
+        f.write(json.dumps(self.dcpMap))
+        f.flush()
+        f.close()
         # self.writeFile.truncate()
         print("Marker: ", response)
         self.lock.release()
@@ -51,7 +61,9 @@ class MyHandler(ResponseHandler):
 
 
 def main():
-    f = open("dcp_data.json", "r+")
+    path = "dcp_data.json"
+    f = reopen_file(path)
+
     try:
         dcpMap = json.loads(f.read())
     except:
@@ -61,7 +73,7 @@ def main():
             "snapEnd": {key: 0 for key in keys}
         }
 
-    handler = MyHandler(dcpMap, f)
+    handler = MyHandler(copy.deepcopy(dcpMap), path)
     client = DcpClient()
     client.connect('127.0.0.1', 8091, 'test_geospatial', 'swarmfarm', 'swarmfarm',
                    handler)
@@ -82,10 +94,18 @@ def main():
         startSeq = snapStart
         snapEnd = snapStart
 
+        if i == 1009:
+            print("gingtn")
+
+
+        istr = str(i)
         if "startSeq" in dcpMap and "snapEnd" in dcpMap \
-            and i in dcpMap["startSeq"] and i in dcpMap["snapEnd"]:
-            startSeq = dcpMap["startSeq"][i]
-            snapEnd = dcpMap["snapEnd"][i]
+            and istr in dcpMap["startSeq"] and istr in dcpMap["snapEnd"]:
+            # if dcpMap["startSeq"][istr] > 0:
+                # startSeq = dcpMap["startSeq"][istr]
+            if dcpMap["snapEnd"][istr] > 0:
+                snapEnd = dcpMap["snapEnd"][istr]
+                startSeq = snapEnd
 
         if startSeq < snapStart:
             startSeq = snapStart
