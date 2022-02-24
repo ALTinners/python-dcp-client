@@ -57,6 +57,10 @@ class Operation():
         header = struct.pack(C.PKT_HEADER_FMT, C.REQ_MAGIC, self.opcode,
                              len(self.key), len(extras), self.data_type,
                              self.vbucket, bodylen, self.opaque, self.cas)
+
+        if self.vbucket == 1009:
+            print("MOAR BUTTSECHS")
+
         return header + extras + self.key.encode('ascii') + self.value.encode('ascii')
 
     def _get_extras(self):
@@ -143,6 +147,9 @@ class StreamRequest(Operation):
 
         self.result['status'] = status
 
+        if self.vbucket == 1009:
+            print("Dickholster")
+
         if status == C.SUCCESS:
             assert (len(body) % 16) == 0
             self.result['failover_log'] = list()
@@ -151,6 +158,8 @@ class StreamRequest(Operation):
             bodylen = len(body)
             while bodylen > pos:
                 vb_uuid, seqno = struct.unpack(">QQ", body[pos:pos+16])
+                if self.vbucket == 1009:
+                    print("1009 has " + str(vb_uuid) + " for " + str(seqno))
                 self.result['failover_log'].append((vb_uuid, seqno))
                 pos += 16
         else:
@@ -179,3 +188,5 @@ class SaslPlain(Operation):
 
     def _get_extras(self):
         return b''
+
+
