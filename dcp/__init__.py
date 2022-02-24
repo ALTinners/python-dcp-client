@@ -86,16 +86,15 @@ class DcpClient(object):
 
         self.lock.release()
 
-    def return_failover_log(self, vbucket):
+    def return_failover_log(self, vbucket, failover_latch, failover_map):
         self.lock.acquire()
         if self.connection is None:
             raise ConnectedException("Not connected")
-        latch = CountdownLatch()
-        op = FailoverLog(vbucket, latch)
+        op = FailoverLog(vbucket, failover_latch, failover_map)
         self.connection.add_operation(op, vbucket)
-        ret = op.get_result()
+        # ret = op.get_result()
         self.lock.release()
-        return ret
+        # return ret
 
     # Returns true if the stream is successfully created
     def add_stream(self, vbucket, flags, start_seqno, end_seqno, vb_uuid,
@@ -108,10 +107,8 @@ class DcpClient(object):
         op = StreamRequest(vbucket, flags, start_seqno, end_seqno, vb_uuid,
                            snap_start, snap_end, latch)
         self.connection.add_operation(op, vbucket)
-        ret = op.get_result()
 
         self.lock.release()
-        return ret
 
     # Returns true if the stream is closed successfully
     def close_stream(self):

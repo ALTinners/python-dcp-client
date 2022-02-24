@@ -152,6 +152,11 @@ class DcpConnection(object):
             packet = self.toRead[0:HEADER_LEN + bodylen]
             self.toRead = self.toRead[HEADER_LEN+bodylen:]
 
+            if status == 1009:
+                print("Buttsuff")
+                if opcode == CMD_STREAM_REQ:
+                    print("More butts")
+
             if opcode in [CMD_OPEN, CMD_STREAM_REQ, CMD_SASL_AUTH, CMD_GET_FAILOVER_LOG]:
                 if opcode is CMD_STREAM_REQ and status is not SUCCESS:
                     self.handler._decr_active_streams()
